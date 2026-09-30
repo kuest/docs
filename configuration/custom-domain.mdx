@@ -13,7 +13,7 @@ Use a reverse proxy to keep Kuest service URLs under your domain.
       <Tab title="Deploy to Cloudflare" icon="cloud">
         Recommended. Enter your domain when Cloudflare asks for `DOMAIN`; the deployment creates the Worker, DNS records, and certificates.
 
-        <a href="https://deploy.workers.cloudflare.com/?url=https://github.com/kuestcom/custom-domain">
+        <a href="https://deploy.workers.cloudflare.com/?url=https://github.com/kuest/custom-domain">
           <img
             src="https://deploy.workers.cloudflare.com/button"
             alt="Deploy the Kuest custom-domain proxy to Cloudflare"
@@ -45,11 +45,11 @@ Use a reverse proxy to keep Kuest service URLs under your domain.
             ws-subscriptions-clob.yourdomain.com
             ```
 
-            Paste the [dashboard Worker](https://github.com/kuestcom/custom-domain/blob/main/examples/dashboard-worker.js) into the Cloudflare editor.
+            Paste the [dashboard Worker](https://github.com/kuest/custom-domain/blob/main/examples/dashboard-worker.js) into the Cloudflare editor.
           </Accordion>
 
           <Accordion title="Other providers">
-            Create the same 12 subdomains as reverse proxies. Each hostname must forward its path, query, headers, body, and WebSocket upgrades to the matching `*.kuest.com` hostname listed in [`services.json`](https://github.com/kuestcom/custom-domain/blob/main/services.json).
+            Create the same 12 subdomains as reverse proxies. Each hostname must forward its path, query, headers, body, and WebSocket upgrades to the matching `*.kuest.com` hostname listed in [`services.json`](https://github.com/kuest/custom-domain/blob/main/services.json).
           </Accordion>
         </AccordionGroup>
       </Tab>
