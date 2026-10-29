@@ -34,7 +34,6 @@ Use a reverse proxy to keep Kuest service URLs under your domain.
             relayer.yourdomain.com
             clob.yourdomain.com
             data-api.yourdomain.com
-            user-pnl-api.yourdomain.com
             community.yourdomain.com
             create-market.yourdomain.com
             gamma-api.yourdomain.com
@@ -49,7 +48,7 @@ Use a reverse proxy to keep Kuest service URLs under your domain.
           </Accordion>
 
           <Accordion title="Other providers">
-            Create the same 12 subdomains as reverse proxies. Each hostname must forward its path, query, headers, body, and WebSocket upgrades to the matching `*.kuest.com` hostname listed in [`services.json`](https://github.com/kuest/custom-domain/blob/main/services.json).
+            Create the service subdomains you need as reverse proxies. Each hostname must forward its path, query, headers, body, and WebSocket upgrades to the matching `*.kuest.com` hostname listed in [`services.json`](https://github.com/kuest/custom-domain/blob/main/services.json).
           </Accordion>
         </AccordionGroup>
       </Tab>
@@ -68,7 +67,6 @@ Use a reverse proxy to keep Kuest service URLs under your domain.
     DATA_URL=https://data-api.yourdomain.com
     CLOB_URL=https://clob.yourdomain.com
     RELAYER_URL=https://relayer.yourdomain.com
-    USER_PNL_URL=https://user-pnl-api.yourdomain.com
     GAMMA_URL=https://gamma-api.yourdomain.com
     COMMUNITY_URL=https://community.yourdomain.com
     PRICE_REFERENCE_URL=https://price-reference.yourdomain.com
