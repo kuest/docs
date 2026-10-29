@@ -18,6 +18,7 @@ icon: blocks
 ```bash
 cd infra/terraform/environments/production/<target>
 cp terraform.tfvars.example terraform.tfvars
+# Fill terraform.tfvars with your target values before continuing.
 terraform init
 terraform plan
 terraform apply
@@ -30,13 +31,13 @@ terraform apply
     Creates the Kubernetes cluster itself. After apply, fetch credentials with `gcloud container clusters get-credentials`.
   </Accordion>
   <Accordion title="Kubernetes">
-    Deploys app resources into an existing cluster, such as one created by the GKE target.
+    Deploys app resources into an existing cluster, such as one created by the GKE target. Edit the module call in `main.tf` to replace the example ingress hostname and TLS secret. Pass `CHAIN_ID` for the intended network through the module's `app_env` values.
   </Accordion>
   <Accordion title="Cloud Run">
     Requires Secret Manager secrets to exist before apply.
   </Accordion>
   <Accordion title="Railway">
-    Provisions the Railway deployment target from the production environment configuration. Keep runtime secrets in Railway rather than committing them to Terraform variables.
+    Runs `railway up --ci` through `local-exec` against an existing Railway project and service. Install and authenticate the Railway CLI first, and configure runtime secrets in Railway.
   </Accordion>
   <Accordion title="Fly.io">
     Uses `flyctl deploy` via Terraform `local-exec`. Secrets are still managed manually in Fly.io.
@@ -50,5 +51,7 @@ terraform apply
 
 - Use immutable image refs whenever possible.
 - Point `SITE_URL` to the public canonical endpoint.
-- For Cloud Run, Kubernetes, and DigitalOcean, provide core secrets plus exactly one storage profile.
+- For Cloud Run, Kubernetes, and DigitalOcean, provide core secrets plus exactly one storage profile. Cloud Run and DigitalOcean accept `CHAIN_ID` through `app_env` in the environment configuration; Kubernetes requires passing `app_env` to the module as described above.
+- Keep `terraform.tfvars` and state files private. Targets that accept secret values can store them in Terraform state even when marked sensitive.
+- Terraform does not run database migrations for the Cloud Run, Kubernetes, DigitalOcean, or Fly targets. Run `bun run db:push` with the production connection before exposing a release. Railway uses the pre-deploy command in its deployment configuration.
 - Keep scheduler behavior aligned with [Scheduled Jobs](/manual-installation/scheduler-jobs).

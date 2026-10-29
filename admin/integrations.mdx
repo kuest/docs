@@ -18,6 +18,7 @@ Enable only the providers your site actively uses. Each section below matches a 
 | LI.FI | Cross-chain deposits and swaps |
 | On/Off-Ramp Payments | Buy Circle USDC on Polygon |
 | Polymarket arbitrage | Cross-platform opportunity display |
+| Kuest Support | Direct operator support from admin pages |
 | Custom integrations | Route-aware scripts for support, analytics, or tracking |
 
 <Tip>
@@ -41,6 +42,9 @@ Provides the AI models used by market context, translations, event creation, and
 <AccordionGroup>
   <Accordion title="Configuration" icon="sparkles" defaultOpen>
     Create an API key in [OpenRouter](https://openrouter.ai/settings/keys), then configure the `API key` and `Preferred OpenRouter model`. You can also let OpenRouter choose the model.
+  </Accordion>
+  <Accordion title="Translation model" icon="languages">
+    Choose a separate model for automatic event and category translations, or select **Use the preferred OpenRouter model**. Enable the translation features in [Locales](/admin/locales).
   </Accordion>
 </AccordionGroup>
 
@@ -133,12 +137,16 @@ Shows cross-platform arbitrage opportunities and optionally supports a separate 
   </Accordion>
 </AccordionGroup>
 
+## Kuest Support
+
+Enable **Kuest Support** to show the operator support widget on admin pages. Choose **Left** or **Right** for its position and save the settings. This is separate from the public support link configured in [General](/admin/general).
+
 ## Custom Integrations
 
 Adds external scripts for chat, analytics, tracking, and other provider-specific features.
 
 <AccordionGroup>
   <Accordion title="Configuration" icon="file-braces" defaultOpen>
-    Add a `Name`, the provider's `Snippet`, and the routes where it should be disabled. Get the snippet from the official documentation of the service you are connecting.
+    Add a `Name`, the provider's JavaScript snippet, and the **Run on** locations where it should execute: Home, Event, Portfolio, Settings, Docs, Admin, Other, or Deposit. Deposit targets the deposit modal. Get the snippet from the official documentation of the service you are connecting.
   </Accordion>
 </AccordionGroup>

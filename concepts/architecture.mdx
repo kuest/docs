@@ -21,7 +21,7 @@ Your prediction market is a branded frontend and operational control plane conne
 
 The Kuest catalog can combine selected mirrored Polymarket markets, markets created by your team, and markets from another operator you explicitly choose as a source. Creating markets is optional: a site can launch using only the shared catalog.
 
-Trading activity remains attributed to the originating operator whether an order comes from the site interface or from a bot or SDK integration used by its traders. That attribution is what connects eligible trading fees to the operator's configured fee wallet.
+Eligible trading fees and confirmed volume are attributed to your site when orders use your operator configuration. Bots and SDK integrations must use the same operator configuration. See [Affiliate & Fees](/admin/affiliate).
 
 The CLOB calculates the category-based Kuest fee off the matching hot path, grosses it up for the signed order's operator share, and sends the deterministic total to the Exchange. The Exchange splits that total between Kuest, the operator, and any affiliate. Orders without an assigned builder use the configured default share, but the unassigned portion stays with Kuest and is accounted separately from amounts eligible to fund rewards.
 
@@ -82,7 +82,7 @@ Do not describe a frontend deployment as its own exchange or promise isolated li
     Logos, event images, and market covers live in the Supabase or S3-compatible storage profile you configure. Terms of Service translations are stored in your PostgreSQL database.
   </Accordion>
   <Accordion title="Secrets" icon="key-round">
-    Keep an encrypted, access-controlled copy of deployment secrets. Rotating `BETTER_AUTH_SECRET` invalidates sessions and encrypted trading credentials.
+    Keep an encrypted, access-controlled copy of deployment secrets. Restoring the database also requires the original `BETTER_AUTH_SECRET`: changing it invalidates sessions and prevents decryption of saved trading credentials and integration secrets.
   </Accordion>
   <Accordion title="Infrastructure configuration" icon="file-cog">
     Keep environment values, domain records, scheduler definitions, and infrastructure code under change control without committing secrets.

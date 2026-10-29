@@ -25,11 +25,11 @@ icon: plane
     flyctl deploy \
       --app <fly-app-name> \
       --config infra/fly/fly.toml \
-      --image ghcr.io/kuestcom/prediction-market@sha256:<digest>
+      --image ghcr.io/kuest/prediction-market@sha256:<digest>
     ```
   </Step>
   <Step title="Run database migrations">
-    Run `pnpm db:push` from a secured environment connected to the production database before opening traffic to a new schema.
+    Run `bun run db:push` from a secured environment connected to the production database before opening traffic to a new schema.
   </Step>
   <Step title="Verify the release">
     Confirm the Fly health checks pass, open `SITE_URL`, and sign in with an admin wallet.
@@ -45,7 +45,7 @@ Rollback example:
 flyctl deploy \
   --app <fly-app-name> \
   --config infra/fly/fly.toml \
-  --image ghcr.io/kuestcom/prediction-market@sha256:<previous-digest>
+  --image ghcr.io/kuest/prediction-market@sha256:<previous-digest>
 ```
 
 ## Scheduler

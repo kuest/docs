@@ -1,11 +1,11 @@
 ---
 title: Launch Overview
-description: Step-by-step tutorial to launch your prediction market with the guided `/launch` flow.
+description: Launch your prediction market with the guided setup, then finish domain and wallet configuration.
 icon: rocket
 ---
 
 <Info>
-Use this page while completing `/launch`. The guided flow creates the repository, connects the required services, and deploys a working site to Vercel.
+Use this page while completing [Guided Launch](https://kuest.com/launch). The guided flow creates the repository, connects the required services, and deploys the site to Vercel.
 </Info>
 
 <Frame>
@@ -30,13 +30,15 @@ Use this page while completing `/launch`. The guided flow creates the repository
   <Card title="GitHub account" icon="github">
     The account or organization that will own the generated repository.
   </Card>
-  <Card title="Vercel token" icon="key-round">
-    A token with access to the account or team that will host the project.
+  <Card title="Vercel account" icon="key-round">
+    Access to the account or team that will host the project, using a token or the available account connection option.
   </Card>
   <Card title="Reown project" icon="wallet-cards">
     A project ID used to enable wallet connections on the deployed site.
   </Card>
 </CardGroup>
+
+Have a valid contact email ready. Supabase must also be connected through the Vercel Marketplace integration before deployment can continue.
 
 <Columns cols={3}>
   <Card title="Step 1: Site + Wallet" icon="wallet" href="#step-1" cta="Open step" arrow="true">
@@ -61,11 +63,8 @@ Use this page while completing `/launch`. The guided flow creates the repository
   <Accordion title="Admin wallet" icon="wallet">
     Connect the wallet that should become the first admin. One signature creates the Kuest credentials used by the site.
   </Accordion>
-  <Accordion title="Email (optional)" icon="mail">
-    Add it only if you want a contact email saved with the generated API key.
-  </Accordion>
-  <Accordion title="Nonce (optional)" icon="hash">
-    Keep `0` unless support tells you to change it.
+  <Accordion title="Email" icon="mail">
+    Enter the required contact email before connecting and signing with the admin wallet.
   </Accordion>
 </AccordionGroup>
 
@@ -81,8 +80,8 @@ This signature does not move funds and the wallet does not need a balance. The c
   <Accordion title="GitHub" icon="github" defaultOpen>
     Connect the account or organization where the project repository should live.
   </Accordion>
-  <Accordion title="Vercel Access Token" icon="key-round">
-    Paste a Vercel token and let the form verify it. Get it from [vercel.com/account/tokens](https://vercel.com/account/tokens).
+  <Accordion title="Vercel" icon="key-round">
+    Paste a Vercel token and let the form verify it, or use the account connection option when available. Get a token from [vercel.com/account/tokens](https://vercel.com/account/tokens) with access to the account or team that will own the deployment.
   </Accordion>
   <Accordion title="Connect Vercel to GitHub" icon="link">
     If prompted, allow Vercel to import the repository from your GitHub account.
@@ -91,7 +90,7 @@ This signature does not move funds and the wallet does not need a balance. The c
     Paste the project ID used for wallet login. Get it from [cloud.reown.com](https://cloud.reown.com).
   </Accordion>
   <Accordion title="Supabase database" icon="database">
-    Choose **Create new** for an isolated production database. Reuse an existing project only when the environments are intentionally shared.
+    If prompted, select **Set up Supabase in Vercel**, complete the Marketplace integration, then refresh the database list. Choose **CREATE NEW DATABASE** for an isolated production database. Reuse an existing project only when the environments are intentionally shared.
   </Accordion>
 </AccordionGroup>
 
@@ -109,6 +108,9 @@ This signature does not move funds and the wallet does not need a balance. The c
   </Accordion>
   <Accordion title="Vercel Team ID" icon="building-2">
     Leave it empty for a personal Vercel account. Fill it only for team-owned projects.
+  </Accordion>
+  <Accordion title="Vercel region" icon="map-pinned">
+    Choose the region for the application's server functions. Keep it close to the Supabase database region.
   </Accordion>
   <Accordion title="Supabase region" icon="map-pinned">
     Usually the default is fine. Change it only if you want a different region.
@@ -143,7 +145,7 @@ Helpful pages: [Environment Variables](/configuration/environment-variables) and
     Follow credential validation, repository setup, database connection, and deployment progress. If a stage fails, open its logs before retrying.
   </Accordion>
   <Accordion title="Result panel" icon="panel-top">
-    Shows the project URL, Vercel dashboard, Supabase dashboard, duration, and logs.
+    Shows the deployment result and final setup checklist, including an optional custom domain and the required Reown allowed-domain step.
   </Accordion>
 </AccordionGroup>
 
@@ -154,13 +156,19 @@ After install, go to [General](/admin/general) to set your brand, support link, 
 ## Verify the launch
 
 <Steps>
+  <Step title="Finish domain setup">
+    Optionally add your site domain in the result panel, apply the DNS records it shows, and verify it. You can also continue with the temporary Vercel domain. Follow [Custom Domain](/configuration/custom-domain#site-domain) to set the canonical `SITE_URL` and redeploy when changing domains.
+  </Step>
+  <Step title="Allow the site in Reown">
+    Open your Reown project, go to **Configuration → Allowed Domains**, add the final site URL shown in the result panel, and save. Confirm the step in the launch form after saving in Reown.
+  </Step>
   <Step title="Open the project URL">
-    Confirm the home page loads from the URL shown in the result panel.
+    Wait for the Vercel deployment to become ready, then confirm the home page loads from the final site URL.
   </Step>
   <Step title="Connect the admin wallet">
     Sign in with the wallet from Step 1 and confirm the admin dashboard is available.
   </Step>
   <Step title="Complete the operator setup">
-    Configure [General settings](/admin/general), [Integrations](/admin/integrations), and your [Custom Domain](/configuration/custom-domain) before sending traffic to the site.
+    Configure [General settings](/admin/general) and [Integrations](/admin/integrations), then verify [scheduled jobs](/manual-installation/scheduler-jobs) before sending traffic to the site. Branded [service subdomains](/configuration/custom-domain#service-subdomains) are optional.
   </Step>
 </Steps>

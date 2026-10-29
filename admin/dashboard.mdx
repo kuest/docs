@@ -1,6 +1,6 @@
 ---
 title: Dashboard
-description: Monitor operational alerts, user growth, site trading volume, and claimable fees from the Admin landing page.
+description: Monitor event alerts, resolution reports, user growth, confirmed trading volume, and fee history from the Admin landing page.
 icon: layout-dashboard
 ---
 
@@ -8,20 +8,20 @@ icon: layout-dashboard
 The Dashboard opens at <code>/admin</code>. Platform settings remain available under <strong>Admin → General</strong> at <code>/admin/general</code>.
 </Info>
 
-Use the Dashboard as the daily operating view: resolve time-sensitive market issues first, then review growth, local order activity, and claimable fees.
+Use the Dashboard as the daily operating view: resolve time-sensitive market issues first, then review growth, confirmed trading activity, and fee history.
 
 <CardGroup cols={2}>
   <Card title="Event attention" icon="volleyball" href="/admin/events">
-    Find active sports events missing a provider ID and past-due markets still awaiting resolution.
+    Find active sports events missing a provider ID, past-due markets awaiting resolution, and user resolution reports awaiting review.
   </Card>
   <Card title="User growth" icon="users" href="/admin/users">
     See total registered users and daily registrations in a compact interactive chart.
   </Card>
-  <Card title="Site trading volume" icon="chart-no-axes-combined" href="/admin/events">
-    Follow accepted orders submitted through this site, with a daily volume history.
+  <Card title="Trading volume" icon="chart-no-axes-combined" href="/admin/events">
+    Follow confirmed trading volume attributed to your site, with a daily volume history.
   </Card>
-  <Card title="Claimable fees" icon="hand-coins" href="/admin/affiliate">
-    Check the amount currently available for the configured fee receiver to withdraw.
+  <Card title="Fee history" icon="hand-coins" href="/admin/affiliate">
+    Review total operator and affiliate earnings, with daily history.
   </Card>
 </CardGroup>
 
@@ -29,13 +29,13 @@ Use the Dashboard as the daily operating view: resolve time-sensitive market iss
 
 <Steps>
   <Step title="Clear event alerts">
-    Review missing sports provider IDs and past-due markets before they affect score sync or settlement.
+    Review missing sports provider IDs, past-due markets, and resolution reports before they affect score sync or settlement.
   </Step>
   <Step title="Check platform activity">
-    Compare recent registrations and accepted local order volume with the previous days.
+    Compare recent registrations and confirmed trading volume with the previous days.
   </Step>
-  <Step title="Review fee balances">
-    Confirm the configured receiver and claim available fees when your operating policy requires it.
+  <Step title="Review fees">
+    Review fee history, then open [Affiliate & Fees](/admin/affiliate) to check the current claimable balance and withdraw when needed.
   </Step>
 </Steps>
 
@@ -48,20 +48,20 @@ Use the Dashboard as the daily operating view: resolve time-sensitive market iss
   <Accordion title="Markets awaiting resolution" icon="gavel">
     Counts visible, active events whose end date has passed while at least one active market remains unresolved. Open the card to inspect the matching events directly.
   </Accordion>
+  <Accordion title="Resolution reports" icon="message-square-warning">
+    Counts user proposals associated with active unresolved markets from allowed creators. Open the card to find events with reports and review the proposed outcomes before resolving them.
+  </Accordion>
   <Accordion title="Registered users" icon="users">
-    Shows the total number of registered users. The chart plots new registrations per day, making quiet days and growth spikes easy to compare. Hover over it to inspect the date and value.
+    Shows the total number of registered users and the number added in the last seven days. The chart plots daily registrations over the last 30 days. Hover over it to inspect the date and value.
   </Accordion>
-  <Accordion title="Site trading volume" icon="chart-no-axes-combined">
-    Shows the value of accepted orders submitted through the current site and its daily history. Trades sent directly through the SDK are not included.
+  <Accordion title="Trading volume" icon="chart-no-axes-combined">
+    Shows all-time confirmed trading volume attributed to your site and the last 30 days of daily volume. Unfilled orders do not contribute.
   </Accordion>
-  <Accordion title="Claimable fees" icon="hand-coins">
-    Reads the fee receiver balance available to withdraw on-chain.
-  </Accordion>
-  <Accordion title="Kuest Message" icon="message-square-text">
-    Displays a short Kuest announcement with relevant product news or operational information for site owners.
+  <Accordion title="Fee history" icon="hand-coins">
+    Shows cumulative operator and affiliate earnings, with daily history over the last 30 days. This is historical income; the currently withdrawable balance is shown in [Affiliate & Fees](/admin/affiliate).
   </Accordion>
 </AccordionGroup>
 
-<Warning>
-Site trading volume represents accepted local orders, not confirmed filled volume. Hidden or inactive events are excluded from the operational attention counts.
-</Warning>
+<Note>
+Missing sports ID and past-due event alerts exclude hidden or inactive events. If a metric cannot be loaded, the Dashboard shows a dash rather than a zero.
+</Note>

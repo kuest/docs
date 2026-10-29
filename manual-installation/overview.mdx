@@ -24,6 +24,18 @@ Use this path if you want to install your prediction market manually on your own
 
 Every manual deployment needs the application runtime, a PostgreSQL database, one asset storage profile, and the production secrets listed in [Environment Variables](/configuration/environment-variables).
 
+## Prepare the repository
+
+Use your copy of `kuest/prediction-market`. Run the deployment commands in these guides from that repository's root, where `infra/`, `package.json`, and `.env.example` are located.
+
+```bash
+cp .env.example .env
+```
+
+Fill in the values before deploying, including `CHAIN_ID` for the intended network.
+
+For commands run outside a container, install the Bun version declared in `package.json` under `engines.bun` (currently `1.4.4`), then install dependencies with `bun install --frozen-lockfile`. The supplied Docker image already includes Bun. Database migrations require a direct or session-pooler connection; use `POSTGRES_URL_NON_POOLING` when the runtime URL uses transaction pooling.
+
 ## Choose a deployment target
 
 | Target | Best fit | Operations level |
@@ -89,14 +101,14 @@ The detailed guides retain the platform-specific commands and deployment files:
 
 <Tabs>
   <Tab title="Supabase Storage" icon="database">
-    Use `POSTGRES_URL` for the runtime database and configure `SUPABASE_URL` with `SUPABASE_SERVICE_ROLE_KEY` for uploaded assets.
+    Use `POSTGRES_URL` for the runtime database and configure `SUPABASE_URL` with `SUPABASE_SECRET_KEY` for uploaded assets.
 
-    If the PostgreSQL database also provides `pg_cron` and `pg_net`, `pnpm db:push` configures the supplied sync jobs there.
+    If the PostgreSQL database also provides `pg_cron` and `pg_net`, `bun run db:push` configures the supplied sync jobs there.
   </Tab>
   <Tab title="S3-compatible" icon="hard-drive">
     Use `POSTGRES_URL` for the runtime database and configure the `S3_*` variables for assets. This profile works with AWS S3, Cloudflare R2, DigitalOcean Spaces, MinIO, and compatible providers.
 
-    Storage choice does not determine scheduling. Use the database jobs when `pg_cron` and `pg_net` are available; otherwise configure an external scheduler.
+    Configure an external scheduler using [Scheduled Jobs](/manual-installation/scheduler-jobs).
   </Tab>
 </Tabs>
 
@@ -114,10 +126,10 @@ Do not configure both storage profiles. PostgreSQL is always the runtime databas
     Set `SITE_URL` to the final HTTPS origin and update it when the public domain changes.
   </Card>
   <Card title="Database migration" icon="database-zap">
-    Run `pnpm db:push` before sending production traffic to a new release.
+    Run `bun run db:push` before sending production traffic to a new release.
   </Card>
   <Card title="Health and sync" icon="activity">
-    Verify the application health route and confirm scheduled sync jobs are succeeding.
+    Verify that the application responds at `/` and confirm scheduled sync jobs are succeeding.
   </Card>
 </Columns>
 

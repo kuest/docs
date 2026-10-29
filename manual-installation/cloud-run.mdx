@@ -9,6 +9,8 @@ icon: cloudy
 - GCP project with billing enabled
 - `gcloud` installed and authenticated
 - Cloud Build, Artifact Registry, Cloud Run Admin, and Secret Manager APIs enabled
+- An Artifact Registry Docker repository matching the repository and region selected for your deployment
+- Permissions for Cloud Build to push images and deploy, and for the Cloud Run runtime service account to access the referenced secrets
 - Base values from [Environment Variables](/configuration/environment-variables)
 - A storage profile from [Manual Installation Overview](/manual-installation/overview)
 
@@ -16,18 +18,22 @@ icon: cloudy
 
 The Cloud Run path uses `infra/cloud-run/cloudbuild.yaml`, which builds from `infra/docker/Dockerfile`, pushes the image to Artifact Registry, and deploys the service.
 
+Before submitting, set `CHAIN_ID` for the intended network in the deploy step's environment values. Add any other runtime overrides from [Environment Variables](/configuration/environment-variables) there or to the secret bindings as appropriate. Create the secrets listed below before deployment.
+
+For manual submissions, supply `SHORT_SHA` explicitly because the image tag uses it. Repository-triggered builds can supply this value automatically.
+
 Supabase mode example:
 
 ```bash
 gcloud builds submit --config infra/cloud-run/cloudbuild.yaml \
-  --substitutions=_SERVICE=kuest-web,_REGION=us-central1,_SITE_URL=https://markets.example.com,_STORAGE_MODE=supabase
+  --substitutions=SHORT_SHA=$(git rev-parse --short HEAD),_SERVICE=kuest-web,_REGION=us-central1,_SITE_URL=https://markets.example.com,_STORAGE_MODE=supabase
 ```
 
 S3 mode example:
 
 ```bash
 gcloud builds submit --config infra/cloud-run/cloudbuild.yaml \
-  --substitutions=_SERVICE=kuest-web,_REGION=us-central1,_SITE_URL=https://markets.example.com,_STORAGE_MODE=s3,_S3_ENDPOINT=https://s3.example.com,_S3_REGION=us-east-1,_S3_FORCE_PATH_STYLE=true
+  --substitutions=SHORT_SHA=$(git rev-parse --short HEAD),_SERVICE=kuest-web,_REGION=us-central1,_SITE_URL=https://markets.example.com,_STORAGE_MODE=s3,_S3_ENDPOINT=https://s3.example.com,_S3_REGION=us-east-1,_S3_FORCE_PATH_STYLE=true
 ```
 
 ## Secrets to create in Secret Manager
@@ -44,7 +50,7 @@ gcloud builds submit --config infra/cloud-run/cloudbuild.yaml \
 
 Add either:
 
-- `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_URL` and `SUPABASE_SECRET_KEY`
 
 or:
 
@@ -54,9 +60,9 @@ or:
 
 ## Migrate and verify
 
-The supplied Cloud Build file builds and deploys the application, but it does not run database migrations. Run `pnpm db:push` from a secured environment with the production `POSTGRES_URL`, `SITE_URL`, and `CRON_SECRET` before opening traffic.
+The supplied Cloud Build file builds and deploys the application, but it does not run database migrations. Run `bun run db:push` from a secured checkout with the production database connection, `SITE_URL`, `CRON_SECRET`, and selected storage profile before opening traffic. Use `POSTGRES_URL_NON_POOLING` when the runtime URL uses transaction pooling.
 
-After deployment, verify the latest revision is serving successfully and open the canonical `SITE_URL`. If the database does not have both `pg_cron` and `pg_net` with the supplied jobs active, configure [Scheduled Jobs](/manual-installation/scheduler-jobs).
+After deployment, verify the latest revision is serving successfully and open the canonical `SITE_URL`. If you use S3 mode, or Supabase mode without active database sync jobs, configure [Scheduled Jobs](/manual-installation/scheduler-jobs).
 
 ## Scheduler
 

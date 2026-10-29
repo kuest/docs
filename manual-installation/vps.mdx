@@ -1,6 +1,6 @@
 ---
 title: VPS
-description: Run Kuest on a Linux VPS with either native Node.js or Docker Compose.
+description: Run Kuest on a Linux VPS with either native Bun or Docker Compose.
 icon: monitor
 ---
 
@@ -25,36 +25,98 @@ sudo ufw allow 443/tcp
 sudo ufw --force enable
 ```
 
-## Option A: Node.js + systemd + Nginx
+## Option A: Bun + systemd + Nginx
 
 <Steps>
   <Step title="Install runtime packages">
     ```bash
-    curl -fsSL https://deb.nodesource.com/setup_24.x | sudo -E bash -
-    sudo apt install -y nodejs build-essential git nginx certbot python3-certbot-nginx
+    sudo apt install -y curl unzip build-essential git nginx certbot python3-certbot-nginx
     ```
+
+    Install Bun for the account that will run the application, using the version in `package.json` under `engines.bun` (currently `1.4.4`). Make its `bun` executable available in that account's `PATH`.
   </Step>
   <Step title="Clone the repository and create .env">
     ```bash
     sudo mkdir -p /opt/kuest
-    sudo chown \"$USER\":\"$USER\" /opt/kuest
+    sudo chown "$USER":"$USER" /opt/kuest
     cd /opt/kuest
     git clone https://github.com/<your-org>/prediction-market.git
     cd prediction-market
     cp .env.example .env
     ```
+
+    Edit `.env` with `vim .env` and fill the required values before continuing. Set `CHAIN_ID` explicitly for the intended network.
   </Step>
   <Step title="Build and migrate">
     ```bash
-    corepack enable
-    corepack install
-    pnpm install --frozen-lockfile
-    pnpm build
-    pnpm db:push
+    bun install --frozen-lockfile
+    bun run db:push
+    bun run build
     ```
   </Step>
   <Step title="Create the systemd service and Nginx site">
-    Set the service working directory to `/opt/kuest/prediction-market`, proxy Nginx to port `3000`, then issue TLS with Certbot.
+    Create `/etc/systemd/system/kuest.service` with `sudo vim`. Replace `deploy` and the Bun path with the account and executable you configured:
+
+    ```ini
+    [Unit]
+    Description=Kuest web application
+    After=network-online.target
+    Wants=network-online.target
+
+    [Service]
+    Type=simple
+    User=deploy
+    WorkingDirectory=/opt/kuest/prediction-market
+    EnvironmentFile=/opt/kuest/prediction-market/.env
+    Environment=NODE_ENV=production
+    Environment=HOSTNAME=127.0.0.1
+    Environment=PORT=3000
+    Environment=PATH=/home/deploy/.bun/bin:/usr/local/bin:/usr/bin:/bin
+    ExecStart=/home/deploy/.bun/bin/bun run start
+    Restart=on-failure
+    RestartSec=5
+
+    [Install]
+    WantedBy=multi-user.target
+    ```
+
+    The service account needs read access to the checkout and `.env`, and write access to `.next` for the standalone startup script. Then enable the service:
+
+    ```bash
+    sudo systemctl daemon-reload
+    sudo systemctl enable --now kuest
+    sudo systemctl status kuest
+    ```
+
+    Create `/etc/nginx/sites-available/kuest` with the following site, replacing the example domain:
+
+    ```nginx
+    server {
+        listen 80;
+        server_name markets.example.com;
+
+        location / {
+            proxy_pass http://127.0.0.1:3000;
+            proxy_http_version 1.1;
+            proxy_set_header Host $host;
+            proxy_set_header X-Forwarded-Host $host;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_buffering off;
+        }
+    }
+    ```
+
+    Enable the site, check the configuration, and issue the TLS certificate:
+
+    ```bash
+    sudo ln -s /etc/nginx/sites-available/kuest /etc/nginx/sites-enabled/kuest
+    sudo nginx -t
+    sudo systemctl reload nginx
+    sudo certbot --nginx -d markets.example.com
+    ```
+
+    Confirm `SITE_URL` matches the final HTTPS origin. Restart the service after environment changes, and rerun `bun run db:push` when the domain or cron secret changes to update database callbacks.
   </Step>
 </Steps>
 
@@ -65,7 +127,7 @@ sudo ufw --force enable
     Install Docker Engine, Compose plugin, and Git on the server.
   </Step>
   <Step title="Clone the repository and create .env">
-    Use the same `/opt/kuest/prediction-market` layout as the Node.js path.
+    Use the same `/opt/kuest/prediction-market` layout as the Bun path, and fill `.env` before starting the containers.
   </Step>
   <Step title="Set domain variables">
     Add:
@@ -82,8 +144,10 @@ sudo ufw --force enable
   </Step>
   <Step title="Run database migrations">
     ```bash
-    docker compose --env-file .env -f infra/docker/docker-compose.production.yml exec web pnpm db:push
+    docker compose --env-file .env -f infra/docker/docker-compose.production.yml exec web bun run db:push
     ```
+
+    See [Docker Compose](/manual-installation/docker-compose) for the local PostgreSQL profile and startup health checks.
   </Step>
 </Steps>
 

@@ -1,11 +1,26 @@
 ---
 title: Custom Domain
-description: Route Kuest services through subdomains you control.
+description: Configure your site's public domain and optionally route Kuest services through branded subdomains.
 sidebarTitle: Custom Domain
 icon: globe
 ---
 
-Use a reverse proxy to keep Kuest service URLs under your domain.
+## Site domain
+
+Attach the public site domain, such as `markets.example.com`, to the hosting provider running your frontend. In the guided launch, you can add and verify it in the result panel; for manual deployments, use your provider's domain settings and the DNS records it supplies.
+
+After DNS verification and HTTPS are ready:
+
+1. Set `SITE_URL` to the canonical public HTTPS URL and redeploy the frontend.
+2. Add that URL to the Reown project's **Configuration → Allowed Domains** and save.
+3. Update external scheduler targets and any Supabase cron configuration that still uses the old URL. See [Scheduler Jobs](/manual-installation/scheduler-jobs).
+4. Verify wallet sign-in, admin access, and scheduled syncs on the new domain.
+
+If [payments](/admin/integrations) are enabled, contact Kuest support before changing domains while payments are pending.
+
+## Service subdomains
+
+Optionally deploy a reverse proxy to keep supported Kuest service URLs under your domain. The proxy is separate from the frontend hosting configured above.
 
 <Steps titleSize="h3">
   <Step title="Create the service proxies">
@@ -22,7 +37,8 @@ Use a reverse proxy to keep Kuest service URLs under your domain.
           <span className="sr-only">Deploy the Kuest custom-domain proxy to Cloudflare</span>
         </a>
 
-        Use the root domain without `https://`, such as `example.com`.
+        Use a domain managed in your Cloudflare account, without `https://`, a path, or a port, such as `example.com` or `markets.example.com`. Each service hostname is created beneath that domain.
+
       </Tab>
 
       <Tab title="Manual setup" icon="settings">
@@ -56,7 +72,7 @@ Use a reverse proxy to keep Kuest service URLs under your domain.
   </Step>
 
   <Step title="Verify the proxy">
-    Open `https://clob.yourdomain.com` and confirm it reaches the Kuest CLOB service.
+    Confirm that `https://clob.yourdomain.com` reaches the Kuest CLOB service and that the data and WebSocket hostnames you plan to use respond through your domain.
   </Step>
 
   <Step title="Update environment variables">

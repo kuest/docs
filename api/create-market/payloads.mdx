@@ -23,11 +23,12 @@ const payloadHash = keccak256(stringToHex(payloadJson));
 | `title` | Yes | Event title. |
 | `slug` | Yes | Event slug. The worker normalizes it before deriving market slugs. |
 | `endDateIso` | Yes | Future ISO timestamp for event resolution. |
-| `mainCategorySlug` | Yes | Main category slug. Sports payloads require `sports`. |
+| `mainCategorySlug` | Yes | Main category slug. Sports payloads accept `sports` or `esports`. |
 | `categories` | Yes | At least 5 unique categories. Use strings or `{ "label": "...", "slug": "..." }` objects. |
 | `marketMode` | Yes | `binary`, `multi_multiple`, or `multi_unique`. |
 | `resolutionSource` | No | Optional URL for the primary resolution source. |
 | `resolutionRules` | Yes | At least 60 characters. Keep rules deterministic and source-based. |
+| `seriesSlug` | No | Groups recurring events. Must end with `-<timestamp><creatorSuffix>`, where the timestamp has at least 10 digits and `creatorSuffix` is the final 12 hexadecimal characters of the creator address, lowercase. Reuse the same value for events in one series. |
 | `sports` | No | Required for sports-specific generated markets. Sports currently uses `marketMode: "multi_multiple"`. |
 
 ## Binary Event
@@ -55,13 +56,15 @@ Use `marketMode: "binary"` for one Yes/No market.
   "binaryOutcomeYes": "Yes",
   "binaryOutcomeNo": "No",
   "resolutionSource": "https://www.coinbase.com/price/bitcoin",
-  "resolutionRules": "Resolve YES if the BTC/USD spot price closes strictly above 110000.00 at 23:00:00 UTC on March 31, 2028 using the listed source. Resolve NO otherwise, including if the source is unavailable and the fallback source confirms a price at or below 110000.00."
+  "resolutionRules": "Resolve YES if the BTC/USD spot price closes strictly above 110000.00 at 23:00:00 UTC on March 31, 2028 using the listed source. Resolve NO otherwise. If the listed source is unavailable at the cutoff, use its historical BTC/USD price for that timestamp once available; do not substitute a later price."
 }
 ```
 
 ## Multi-Market Event
 
-Use `multi_multiple` when multiple options can resolve true independently. Use `multi_unique` when exactly one option should resolve true.
+Use `multi_multiple` when multiple options can resolve true independently. Use `multi_unique` when exactly one option should resolve true; this uses the negative-risk contracts.
+
+Non-sports multi-market payloads need at least two options with unique normalized slugs. Each option must include `question` and `shortName`. `title` defaults to the question, `slug` defaults to the title, and `id` defaults to `option-1`, `option-2`, and so on. Set an explicit `id` when attaching an `optionImage:<optionId>`.
 
 ```json
 {
@@ -103,7 +106,7 @@ Use `multi_multiple` when multiple options can resolve true independently. Use `
 
 ## Sports Event
 
-Sports payloads require `mainCategorySlug: "sports"` and currently require `marketMode: "multi_multiple"`. The recommended flow is to select a match from an independent sports data provider and send `sourceProvider` plus `sourceEventId` or `sourceGameId`. That single provider ID is enough for later score/status lookup; league, date, teams, and logos can be derived and remain optional overrides. Generated sports templates still need full game details because they create multiple standard markets.
+Sports payloads accept `mainCategorySlug: "sports"` or `"esports"` and currently require `marketMode: "multi_multiple"`. The recommended flow is to select a match from an independent sports data provider and send `sourceProvider` plus `sourceEventId` or `sourceGameId`. With explicit `sports.markets` and a provider ID, league, date, teams, and logos may be omitted. Generated templates require `sportSlug`, `leagueSlug`, `eventDate`, `startTime`, and both teams.
 
 For manually supplied teams, send exactly one home team and one away team. If a team does not include a `logo`, upload `teamLogo:home` or `teamLogo:away` in `POST /prepare`.
 
@@ -134,7 +137,6 @@ For manually supplied teams, send exactly one home team and one away team. If a 
     "sourceLeagueId": "8",
     "sourceLeagueLabel": "Premier League",
     "sourceMatchConfidence": 0.94,
-    "livestreamUrl": "https://www.youtube.com/watch?v=example",
     "sportSlug": "soccer",
     "leagueSlug": "premier-league",
     "eventDate": "2028-05-01",

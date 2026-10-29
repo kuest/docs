@@ -1,6 +1,6 @@
 ---
 title: Users
-description: Search and review user accounts, admin badges, referral sources, and account creation dates.
+description: Search and review user accounts, admin badges, KYC status, referral sources, and account creation dates.
 icon: users
 ---
 
@@ -17,6 +17,9 @@ This page is mainly for review and support. It is not where admin access is gran
   </Accordion>
   <Accordion title="Referral column" icon="badge-percent">
     The referral column helps when a user asks who referred them or when you need to inspect affiliate attribution. If there is no referral source, the row stays empty there.
+  </Accordion>
+  <Accordion title="KYC status" icon="scan-face">
+    When [Sumsub](/admin/integrations#sumsub) is active and configured, the table shows each user's verification status: gray for not validated, the primary color for approved, and red for rejected. Verification is managed through Sumsub, not by editing a user row.
   </Accordion>
   <Accordion title="What this page does not change" icon="shield-off">
     Table selection does not grant permissions. Admin access is still controlled by `ADMIN_WALLETS` and the actual admin auth logic, not by editing rows on this screen.

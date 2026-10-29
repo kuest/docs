@@ -43,8 +43,8 @@ remaining **80%** funds the market's community reward pool.
 
 | Market type | Creation fee | User reward pool | Kuest share |
 | --- | ---: | ---: | ---: |
-| Standard market | $5.00 | $4.00 | $1.00 |
-| Multi-market / neg-risk question | $2.00 per question | $1.60 per question | $0.40 per question |
+| Standard market, including each `multi_multiple` option | $5.00 per market | $4.00 per market | $1.00 per market |
+| Neg-risk (`multi_unique`) question | $2.00 per question | $1.60 per question | $0.40 per question |
 
 The Kuest share is transferred immediately to the RefillVault. The reward pool remains in
 the Resolution Rewards proxy until finalization and claim. Any integer-division remainder
@@ -107,7 +107,9 @@ may request withdrawal. The request is irreversible and starts a further **24-ho
   released permissionlessly.
 
 No third party can redirect or claim the reporter's bond. Releasing an expired slot only
-makes that bond claimable by its original DepositWallet.
+makes that bond claimable by its original DepositWallet. If official resolution happens after
+the withdrawal delay expires, the bond is returned even when the slot has not yet been
+released.
 
 ## Finalization outcomes
 
@@ -115,9 +117,12 @@ makes that bond claimable by its original DepositWallet.
 | --- | --- | --- |
 | Eligible active report is correct | Bond returned to that DepositWallet | Credited to the same DepositWallet |
 | Correct report already requested withdrawal | Bond returned | Credited to Kuest |
-| Report is wrong | Credited to the Security Reserve | Not applicable |
-| YES or NO with no eligible correct report | Any wrong bond goes to the Security Reserve | Credited to Kuest |
-| UNKNOWN / 50-50, cancellation, or emergency | Every bond is returned | Credited to the Security Reserve |
+| Report is wrong and its withdrawal delay had not expired at resolution | Credited to the Security Reserve | Not applicable |
+| Withdrawal delay expired before official resolution | Bond returned regardless of outcome | This report is not eligible for the pool |
+| YES or NO with no eligible correct report | Unexpired wrong bonds go to the Security Reserve | Credited to Kuest |
+| UNKNOWN / 50-50 | Every remaining bond is returned | Credited to the Security Reserve |
+
+Cancellation or emergency labels do not independently trigger a Rewards refund. This contract follows the official DRO outcome; the exceptional refund rule applies when that outcome is UNKNOWN / 50-50.
 
 If no one reports before a YES or NO resolution, the reward pool returns to Kuest. An
 unresolved market may keep its pool pending while reporters remain free to complete the

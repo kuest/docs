@@ -5,7 +5,7 @@ icon: timer
 ---
 
 <Info>
-If you use Supabase mode, `npm run db:push` already sets up `pg_cron` with this same sync schedule.
+In Supabase mode, `bun run db:push` configures the HTTP sync jobs when both `pg_cron` and `pg_net` are installed and `CRON_SECRET` is set. Check the migration output: unavailable extensions or a missing secret skip this setup. Postgres + S3 deployments need an external scheduler.
 </Info>
 
 ## What your scheduler should call
@@ -27,7 +27,7 @@ If you use Supabase mode, `npm run db:push` already sets up `pg_cron` with this 
 Example:
 
 ```bash
-curl -sS -X GET \
+curl -fsS --max-time 70 -X GET \
   -H "Authorization: Bearer ${CRON_SECRET}" \
   "${SITE_URL}/api/sync/events"
 ```
@@ -40,7 +40,7 @@ curl -sS -X GET \
 | `/api/sync/event-creations/enqueue` | `0,30 * * * *` | Enqueues scheduled event creations twice per hour |
 | `/api/sync/event-creations` | `1,31 * * * *` | Processes event creation jobs after enqueue runs |
 | `/api/sync/translations/enqueue` | `3,12,21,30,39,48,57 * * * *` | Enqueues translation jobs seven times per hour |
-| `/api/sync/translations` | `4,13,22,31,40,49,58 * * * *` | Processes translation jobs one minute after enqueue runs |
+| `/api/sync/translations` | `* * * * *` | Processes queued translation jobs every minute |
 | `/api/sync/resolution` | `5-55/10 * * * *` | Every 10 minutes, offset by 5 minutes |
 | `/api/sync/sports-scores` | `* * * * *` | Updates live and recently started sports scores every minute |
 | `/api/sync/volume/enqueue` | `*/10 * * * *` | Enqueues volume sync work every 10 minutes |
@@ -48,7 +48,15 @@ curl -sS -X GET \
 
 Use UTC unless your team needs a strict local timezone.
 
-Supabase mode also creates `clean-cron-details` at `0 0 * * *` and `clean-jobs` at `15 * * * *` as database maintenance jobs. External schedulers should only call the HTTP sync endpoints above.
+When `pg_cron` is installed, Supabase mode also creates `clean-cron-details` at `0 0 * * *` and `clean-jobs` at `15 * * * *` as database maintenance jobs. External schedulers should only call the HTTP sync endpoints above.
+
+Translation processing requires an OpenRouter key in [Integrations](/admin/integrations) and the corresponding options in [Locales](/admin/locales).
+
+## Verify and update the scheduler
+
+Check that scheduled requests succeed and that events, translations, and scores update on the site. Investigate errors in the application logs.
+
+After changing `SITE_URL` or `CRON_SECRET`, rerun `bun run db:push` with the new values to update database callbacks. For an external scheduler, update its URL and bearer secret directly.
 
 ## Expected responses
 

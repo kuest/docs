@@ -6,21 +6,18 @@ icon: key
 
 Start with the required runtime values, then choose exactly one storage profile. Add network overrides and operational integrations only when your deployment needs them.
 
-<Warning>
-If the `KUEST_*` credentials are missing or invalid, users can browse markets, but trading authentication and Deposit Wallet flows will fail.
-</Warning>
-
 ## Core runtime
 
 | Variable | Purpose | Configuration |
 | --- | --- | --- |
 | `SITE_URL` | Canonical origin for redirects, generated links, and scheduled job callbacks. | Use the final HTTPS URL, such as `https://markets.example.com`. |
-| `KUEST_ADDRESS`<br />`KUEST_API_KEY`<br />`KUEST_API_SECRET`<br />`KUEST_PASSPHRASE` | Authenticated trading and proxy wallet setup. | Generate the credential set at [auth.kuest.com](https://auth.kuest.com/) with the operator wallet. |
+| `KUEST_ADDRESS`<br />`KUEST_API_KEY`<br />`KUEST_API_SECRET`<br />`KUEST_PASSPHRASE` | Kuest credentials requested by your deployment setup. | Generate the credential set at [auth.kuest.com](https://auth.kuest.com/) with the operator wallet. |
 | `ADMIN_WALLETS` | Access to the admin dashboard. | Comma-separated addresses for trusted operator wallets. |
 | `REOWN_APPKIT_PROJECT_ID` | Wallet connections through Reown. | Copy the project ID from the [Reown dashboard](https://dashboard.reown.com/). |
 | `BETTER_AUTH_SECRET` | Better Auth sessions and encrypted trading credentials. | Generate a random value with at least 32 characters. |
 | `CRON_SECRET` | Authentication for scheduled sync routes. | Generate a random value with at least 16 characters. |
-| `POSTGRES_URL` | Runtime database for users, settings, events, markets, and migrations. | Use the PostgreSQL URL supplied by your database provider. |
+| `POSTGRES_URL` | Runtime database for users, settings, events, and markets. | Use the PostgreSQL URL supplied by your database provider. |
+| `POSTGRES_URL_NON_POOLING` | Optional dedicated migration connection. | Use a direct or session-pooler URL for migrations. Falls back to `POSTGRES_URL` when empty. |
 
 <Warning>
 Treat `BETTER_AUTH_SECRET` as a persistent production secret. Rotating it invalidates existing sessions and can make previously encrypted credentials unreadable.
@@ -33,9 +30,11 @@ Treat `BETTER_AUTH_SECRET` as a persistent production secret. Rotating it invali
     | Variable | Required | Purpose |
     | --- | --- | --- |
     | `SUPABASE_URL` | Yes | Server-side Supabase project URL used for asset storage. |
-    | `SUPABASE_SERVICE_ROLE_KEY` | Yes | Server-only credential for uploads, signed URLs, and asset management. |
+    | `SUPABASE_SECRET_KEY` | Yes | Server-only credential for uploads and asset management. |
 
-    Do not expose the service role key in browser code or variables prefixed with `NEXT_PUBLIC_`.
+    Use the current Supabase secret key. `SUPABASE_SERVICE_ROLE_KEY` remains supported as a legacy fallback when `SUPABASE_SECRET_KEY` is empty. Do not expose either key in browser code or variables prefixed with `NEXT_PUBLIC_`.
+
+    After setup, verify that uploads succeed and that their public URLs are accessible.
   </Tab>
   <Tab title="S3-compatible" icon="hard-drive">
     | Variable | Required | Purpose |
@@ -45,8 +44,10 @@ Treat `BETTER_AUTH_SECRET` as a persistent production secret. Rotating it invali
     | `S3_SECRET_ACCESS_KEY` | Yes | Secret paired with the access key. |
     | `S3_ENDPOINT` | Provider-dependent | Endpoint for R2, Spaces, MinIO, or another compatible provider. |
     | `S3_REGION` | Provider-dependent | Region used when signing requests. |
-    | `S3_PUBLIC_URL` | Optional | Public CDN or asset-domain base URL. |
+    | `S3_PUBLIC_URL` | Optional | Public CDN or asset-domain base URL. Set it when the storage API endpoint does not serve public assets, such as with R2. |
     | `S3_FORCE_PATH_STYLE` | Optional | Set `true` for providers that require path-style URLs. |
+
+    Create the bucket before uploading. Uploaded assets must be readable through the configured public URL; the application does not provision S3 buckets or public-access policies.
   </Tab>
 </Tabs>
 
@@ -58,7 +59,7 @@ Choose one asset storage profile only. Both profiles still use `POSTGRES_URL` as
 
 | Variable | When to set it | Example |
 | --- | --- | --- |
-| `POLYGON_RPC_URL` | Use a private or higher-capacity RPC, or replace an unavailable default endpoint. | `https://polygon-bor-rpc.publicnode.com` |
+| `POLYGON_RPC_URL` | Comma-separated HTTP(S) RPC endpoints in fallback order. Use endpoints for the selected chain. These URLs are public, so use browser-safe credentials or origin restrictions. | `https://polygon-bor-rpc.publicnode.com` |
 | `CHAIN_ID` | Select the network used by chain-aware runtime flows. Use `80002` for Amoy or `137` for Polygon mainnet. | `137` |
 | `BUILD_PRERENDER_PUBLIC_SHELL` | Force public-shell prerendering on or off. Leave it empty to infer the behavior from the build environment. | `true` |
 | `DISABLE_IMAGE_OPTIMIZATION` | Disable Next.js image optimization when a host, proxy, or CDN handles images upstream. | `true` |

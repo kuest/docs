@@ -4,13 +4,15 @@ description: Reference for the Create Market API endpoints in the order used by 
 icon: route
 ---
 
-All endpoints return JSON except `POST /prepare`, which receives `multipart/form-data` and returns JSON. Error responses use this shape:
+The endpoints below return JSON. Send JSON request bodies to `POST /prepare-auth`, `POST /tx-confirm`, and `POST /finalize`; `POST /prepare` receives `multipart/form-data`.
 
 Set the worker URL once so the examples work with the Kuest endpoint or an operator runtime override:
 
 ```bash
 export CREATE_MARKET_URL=https://create-market.kuest.com
 ```
+
+API errors use this shape (a rejected CORS origin returns plain-text `Forbidden`):
 
 ```json
 {
@@ -39,12 +41,14 @@ Important fields:
 | `defaultChainId` | Chain used when `payload.chainId` is omitted. |
 | `defaultResolutionType` | Default resolution stack, usually `dro_moov2`. |
 | `supportedChainIds` | Chain IDs accepted by the worker. |
-| `requiredCreatorFundingUsdc` | Minimum practical USDC funding hint for the creator. |
+| `requiredCreatorFundingUsdc` | Per-market funding hint for the default resolution type, not the total for a multi-market event. |
 | `directNormalMarketFeeUsdc` | Direct resolution fee for normal markets. |
 | `directNegRiskQuestionFeeUsdc` | Direct resolution fee per negative-risk question. |
 | `resolutionRewards` | Resolution Rewards proxy address. |
 | `imagePolicy` | Upload and normalized image limits. |
 | `chains` | Per-chain contract addresses and resolution stacks. |
+
+Budget for every market: `multi_multiple` pays the standard fee for each independent market, while `multi_unique` pays the neg-risk fee for each question. Inspect the returned transaction plan before signing; include POL for gas separately.
 
 ## 2. POST /prepare-auth
 
@@ -87,7 +91,7 @@ Response:
 }
 ```
 
-When signing, include `chainId` in the EIP-712 domain:
+`expiresAt` is a Unix timestamp in **milliseconds**, and the challenge is valid for 30 minutes. Use the returned domain and types; include `chainId` in the EIP-712 domain when signing:
 
 ```ts
 const signature = await walletClient.signTypedData({
@@ -124,14 +128,16 @@ Required multipart fields:
 | `optionImages[]` | file | Optional fallback option images by order. |
 | `teamLogo:home` / `teamLogo:away` | file | Required for sports teams that do not include `logo` in the payload. |
 
+Save the exact string you hashed as `payload.json`, and save the returned challenge fields plus your real signature as `auth.json`. Do not reformat `payload.json` after hashing it.
+
 ```bash
 curl -X POST "${CREATE_MARKET_URL}/prepare" \
-  -F 'payload={"chainId":80002,"creator":"0x1111111111111111111111111111111111111111","title":"Will BTC close above 110000 USD on March 31, 2028?","slug":"btc-above-110000-march-31-2028","endDateIso":"2028-03-31T23:00:00.000Z","mainCategorySlug":"crypto","categories":["crypto","bitcoin","price-action","march","macro"],"marketMode":"binary","binaryQuestion":"Will BTC close above 110000 USD on March 31, 2028?","binaryOutcomeYes":"Yes","binaryOutcomeNo":"No","resolutionRules":"Resolve YES if BTC/USD closes strictly above 110000.00 at the cutoff using the listed source. Resolve NO otherwise."}' \
-  -F 'auth={"requestId":"8b583ebd-1f8f-46fa-b31b-06643f58d457","nonce":"0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","expiresAt":1846000000000,"payloadHash":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","signature":"0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"}' \
-  -F "eventImage=@./event.webp"
+  -F 'payload=<payload.json' \
+  -F 'auth=<auth.json' \
+  -F 'eventImage=@./event.webp'
 ```
 
-Accepted response:
+Accepted response (`202 Accepted`):
 
 ```json
 {
@@ -160,6 +166,8 @@ Query parameters:
 | `creator` | No | Required if `requestId` is omitted. When both are sent, the request must belong to this creator. |
 | `chainId` | No | Optional filter. |
 
+If no request matches the supplied identifiers, the response is `{ "request": null }`. Persist `requestId` so recovery targets the intended request instead of whichever request is newest for that creator.
+
 Prepared response shape:
 
 ```json
@@ -186,6 +194,14 @@ Prepared response shape:
           "description": "Approve 5 USDC for direct resolution fees"
         },
         {
+          "id": "pay-direct-market-fee-1",
+          "to": "0x57827d48Da09ba227aFda89C083b4E35972Aa741",
+          "value": "0",
+          "data": "0x...",
+          "description": "Pay direct resolution fee for this market",
+          "marketKey": "binary"
+        },
+        {
           "id": "initialize-market-1",
           "to": "0xc97c5aa5180731c7bB741Fc9B3c293272ca8d33D",
           "value": "0",
@@ -203,7 +219,9 @@ Prepared response shape:
 }
 ```
 
-Send each `txPlan` item from the creator wallet:
+The example above abbreviates calldata and uses placeholder hashes; always execute the exact plan returned for your request, including fee-payment transactions.
+
+Send each `txPlan` item **in order** from the creator wallet, and wait for a successful receipt before sending a dependent transaction:
 
 ```ts
 const hash = await walletClient.sendTransaction({
@@ -212,6 +230,10 @@ const hash = await walletClient.sendTransaction({
   value: BigInt(tx.value),
   data: tx.data
 });
+const receipt = await publicClient.waitForTransactionReceipt({ hash });
+if (receipt.status !== "success") {
+  throw new Error(`Transaction ${tx.id} reverted: ${hash}`);
+}
 ```
 
 ## 5. POST /tx-confirm
@@ -228,12 +250,18 @@ Persists transaction hashes so the flow can resume. This endpoint checks that tr
       "hash": "0xdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
     },
     {
+      "id": "pay-direct-market-fee-1",
+      "hash": "0x7777777777777777777777777777777777777777777777777777777777777777"
+    },
+    {
       "id": "initialize-market-1",
       "hash": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
     }
   ]
 }
 ```
+
+Reusing an ID with the same hash is safe; changing its hash returns `409` with `Conflicting tx hash`. The `prepared` status in this endpoint's response acknowledges saved hashes; use `GET /pending` to read the workflow status.
 
 Response:
 
@@ -245,6 +273,10 @@ Response:
     {
       "id": "approve-direct-resolution-fee",
       "hash": "0xdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+    },
+    {
+      "id": "pay-direct-market-fee-1",
+      "hash": "0x7777777777777777777777777777777777777777777777777777777777777777"
     },
     {
       "id": "initialize-market-1",
@@ -268,12 +300,18 @@ Starts or resumes finalization. Send all hashes you have, including hashes alrea
       "hash": "0xdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
     },
     {
+      "id": "pay-direct-market-fee-1",
+      "hash": "0x7777777777777777777777777777777777777777777777777777777777777777"
+    },
+    {
       "id": "initialize-market-1",
       "hash": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
     }
   ]
 }
 ```
+
+A `finalize_in_progress` response uses `202 Accepted`; poll `GET /pending` for the next step. Other successful responses use `200 OK`.
 
 Possible responses:
 
@@ -288,7 +326,7 @@ Possible responses:
 {
   "requestId": "8b583ebd-1f8f-46fa-b31b-06643f58d457",
   "status": "metadata_update_pending",
-  "creatorTxCount": 2,
+  "creatorTxCount": 3,
   "registerResults": [
     {
       "key": "binary",
@@ -330,7 +368,7 @@ Final response:
 {
   "requestId": "8b583ebd-1f8f-46fa-b31b-06643f58d457",
   "status": "finalized",
-  "creatorTxCount": 3,
+  "creatorTxCount": 4,
   "registerResults": [
     {
       "key": "binary",

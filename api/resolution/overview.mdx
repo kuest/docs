@@ -135,7 +135,15 @@ DirectResolutionOracle.proposeAndResolveNegRisk(
 0x5945535f4f525f4e4f5f51554552590000000000000000000000000000000000
 ```
 
+## Batch resolution
+
+Use `proposeAndResolveBatch(ResolutionRequest[])` for standard markets or `proposeAndResolveNegRiskBatch(NegRiskResolutionRequest[])` for neg-risk markets. Each tuple contains the arguments in the same order as its corresponding single-market call above.
+
+The entire batch is atomic: one failed item reverts every resolution in that transaction. `BatchItemFailed` and `NegRiskBatchItemFailed` identify the failed index and question IDs. Simulate the batch, remove or investigate the failing item, then simulate the remaining batch again before submitting. The signer must be an approved proposer for every included market. There is no fixed item limit in the contract; cap batch size according to estimated gas and the target chain's transaction limits.
+
 ## Complete Scripts
+
+The examples submit one resolution transaction. TypeScript, JavaScript, Python, and Rust also wait for confirmation; after using Go or PHP, follow the receipt check in [After submission](#after-submission).
 
 Each script uses the same environment variables:
 
@@ -254,7 +262,10 @@ const hash = isNegRisk
     });
 
 console.log(`Submitted: ${hash}`);
-await publicClient.waitForTransactionReceipt({ hash });
+const receipt = await publicClient.waitForTransactionReceipt({ hash });
+if (receipt.status !== "success") {
+  throw new Error(`Resolution transaction reverted: ${hash}`);
+}
 console.log("Confirmed.");
 ```
 
@@ -462,7 +473,7 @@ function = (
 
 tx = function.build_transaction({
     "from": account.address,
-    "nonce": w3.eth.get_transaction_count(account.address),
+    "nonce": w3.eth.get_transaction_count(account.address, "pending"),
     "chainId": w3.eth.chain_id,
     "gasPrice": w3.eth.gas_price,
 })
@@ -470,7 +481,9 @@ tx["gas"] = int(w3.eth.estimate_gas(tx) * 1.5)
 signed = account.sign_transaction(tx)
 tx_hash = w3.eth.send_raw_transaction(signed.raw_transaction)
 print(f"Submitted: {tx_hash.hex()}")
-w3.eth.wait_for_transaction_receipt(tx_hash)
+receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+if receipt.status != 1:
+    raise RuntimeError(f"Resolution transaction reverted: {tx_hash.hex()}")
 print("Confirmed.")
 ```
 
@@ -568,9 +581,18 @@ func main() {
 	publicKey := privateKey.Public().(*ecdsa.PublicKey)
 	from := crypto.PubkeyToAddress(*publicKey)
 
-	adapterABI, _ := abi.JSON(strings.NewReader(adapterABIJSON))
-	oracleABI, _ := abi.JSON(strings.NewReader(oracleABIJSON))
-	callData, _ := adapterABI.Pack("getQuestion", questionID)
+	adapterABI, err := abi.JSON(strings.NewReader(adapterABIJSON))
+	if err != nil {
+		log.Fatal(err)
+	}
+	oracleABI, err := abi.JSON(strings.NewReader(oracleABIJSON))
+	if err != nil {
+		log.Fatal(err)
+	}
+	callData, err := adapterABI.Pack("getQuestion", questionID)
+	if err != nil {
+		log.Fatal(err)
+	}
 	rawQuestion, err := client.CallContract(ctx, ethereum.CallMsg{To: &adapterAddress, Data: callData}, nil)
 	if err != nil {
 		log.Fatal(err)
@@ -620,9 +642,18 @@ func main() {
 		log.Fatal(err)
 	}
 
-	chainID, _ := client.ChainID(ctx)
-	nonce, _ := client.PendingNonceAt(ctx, from)
-	gasPrice, _ := client.SuggestGasPrice(ctx)
+	chainID, err := client.ChainID(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	nonce, err := client.PendingNonceAt(ctx, from)
+	if err != nil {
+		log.Fatal(err)
+	}
+	gasPrice, err := client.SuggestGasPrice(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
 	gasLimit, err := client.EstimateGas(ctx, ethereum.CallMsg{From: from, To: &oracleAddress, Data: data})
 	if err != nil {
 		log.Fatal(err)
@@ -642,7 +673,8 @@ func main() {
 ```
 
 ```rust Rust
-// cargo add ethers tokio eyre serde_json
+// cargo add ethers eyre serde_json
+// cargo add tokio --features macros,rt-multi-thread
 use ethers::abi::Abi;
 use ethers::prelude::*;
 use std::{env, sync::Arc, time::Duration};
@@ -713,7 +745,7 @@ async fn main() -> eyre::Result<()> {
         eyre::bail!("This market is already resolved.");
     }
 
-    let pending_tx = if is_neg_risk {
+    let call = if is_neg_risk {
         oracle.method::<_, U256>(
             "proposeAndResolveNegRisk",
             (
@@ -726,7 +758,7 @@ async fn main() -> eyre::Result<()> {
                 ancillary_data,
                 proposed_price(&outcome),
             ),
-        )?.send().await?
+        )?
     } else {
         oracle.method::<_, U256>(
             "proposeAndResolve",
@@ -738,11 +770,15 @@ async fn main() -> eyre::Result<()> {
                 ancillary_data,
                 proposed_price(&outcome),
             ),
-        )?.send().await?
+        )?
     };
 
+    let pending_tx = call.send().await?;
     println!("Submitted: {:?}", pending_tx.tx_hash());
-    pending_tx.await?;
+    let receipt = pending_tx.await?.ok_or_else(|| eyre::eyre!("Transaction was dropped before confirmation"))?;
+    if receipt.status != Some(U64::from(1)) {
+        eyre::bail!("Resolution transaction reverted: {:?}", receipt.transaction_hash);
+    }
     println!("Confirmed.");
     Ok(())
 }

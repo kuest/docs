@@ -20,7 +20,7 @@ Use this page to operate existing events and to create new ones. Visibility, con
 
 <AccordionGroup>
   <Accordion title="Table and filters" icon="list-filter" defaultOpen>
-    This page is for operating events that already exist. You can search by text and filter by main category, creator, series, active-only status, and operational attention. Attention filters show sports events missing a provider ID or past-due events with unresolved markets, including the filters opened from the [Dashboard](/admin/dashboard). The table also shows status, 24h and total volume, created date, and end date.
+    Search by text and filter by main category, creator, series, active-only status, and operational attention. Use **Hide crypto** to remove crypto events from this admin view. Attention filters show sports events missing a provider ID, past-due events with unresolved markets, or events with resolution reports, including the filters opened from the [Dashboard](/admin/dashboard). The table also shows status, 24h and total volume, created date, and end date.
   </Accordion>
   <Accordion title="Visibility toggle" icon="eye-off">
     The eye icon hides or shows an event in public event lists. This does not delete the event. It only controls whether users can discover it on the site.
@@ -31,11 +31,17 @@ Use this page to operate existing events and to create new ones. Visibility, con
   <Accordion title="Additional Context" icon="notebook-pen">
     Add or remove event-specific context shown in the Rules area. This is separate from the AI-generated Market Context configured in [General](/admin/general#market-context).
   </Accordion>
+  <Accordion title="Translations" icon="languages">
+    Use **Edit translations** to review and correct the event title in enabled non-English languages. When Rules translations are enabled in [Locales](/admin/locales) and the event has Rules, the same dialog includes their translations. English is shown as the read-only source.
+  </Accordion>
+  <Accordion title="Resolution reports" icon="message-square-warning">
+    Use **View resolution reports** on events with user proposals. Reports are grouped by market and show the proposed outcome, reporter, time, and the reporter's history of correct and incorrect proposals. Review them before resolving the event; opening a report does not submit an on-chain result.
+  </Accordion>
   <Accordion title="Sports final status and source matching" icon="trophy">
     Sports moneyline events get a trophy action for the final score and ended state. When TheSportsDB or PandaScore is configured in [Integrations](/admin/integrations), search for the source match, select a candidate, and review its provider IDs, league, confidence, score, and livestream data before saving. Synced source metadata is also used by sports-score automation.
   </Accordion>
   <Accordion title="Sync settings" icon="settings-2">
-    The settings dialog controls whether newly synced events auto-deploy or stay manual until your team reviews them. Turn auto-deploy off if you want a human review step before new synced markets go live.
+    The **Auto-deploy new events** setting controls local visibility after sync. When disabled, new synced events stay hidden until you enable them in this list. It does not prevent the underlying markets from being deployed on-chain.
   </Accordion>
   <Accordion title="Calendar and manual creation" icon="square-plus">
     Click <strong>Create Event</strong> to open the calendar-based workflow documented below. The form creates the event and its prediction markets together.

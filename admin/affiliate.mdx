@@ -126,10 +126,13 @@ Maker Rebates and Liquidity Rewards are independent. A resting order can earn a 
     The receiver must be your deployed Deposit Wallet. On Amoy, the page identifies the field as Polygon Amoy. Use <strong>Use my deposit wallet</strong> when the stored receiver differs.
   </Accordion>
   <Accordion title="Claimable earnings" icon="coins">
-    Claimable balances are read from the current CTF and NegRisk Exchanges. Connect the receiver wallet to claim; the interface excludes replaced Exchange addresses.
+    Claimable balances are read from the current CTF and NegRisk Exchanges. Sign in with the account that owns the configured Deposit Wallet to claim through it; a receiver configured as an EOA requires that wallet to be connected. The interface requires at least `1 USDC` when balances are available and excludes replaced Exchange addresses.
+  </Accordion>
+  <Accordion title="Affiliate performance" icon="chart-no-axes-combined">
+    Review total referrals, affiliate volume, and affiliate fees, then use the partner table to inspect referring accounts and their earnings. The [Dashboard](/admin/dashboard) also shows historical fees received by the configured receiver; that history is separate from the current claimable balance.
   </Accordion>
 </AccordionGroup>
 
 ## Operational changes
 
-Range, default share, maker caps, Kuest maker fee, and `maxFeeRateBps` are Exchange-admin settings. Change both Exchanges together while trading is paused, verify their getters, let the CLOB and orderbook subgraph synchronize, and resume only after both report the same policy.
+Range, default share, maker caps, Kuest maker fee, and `maxFeeRateBps` are protocol-level Exchange settings managed by Kuest. Site owners configure their operator and affiliate shares through this page; contact Kuest support for changes to protocol limits or policy.

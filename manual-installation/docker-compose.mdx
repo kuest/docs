@@ -10,6 +10,21 @@ icon: container
 - Teams that want Docker-based local and production parity.
 - Operators comfortable managing environment files and redeploying containers.
 
+## Prepare the environment
+
+Run these commands from the frontend repository root, after filling `.env` as described in [Manual Installation Overview](/manual-installation/overview).
+
+For the `local-postgres` profile, set the database credentials and point the application at the Compose service name:
+
+```env
+POSTGRES_DB=kuest
+POSTGRES_USER=kuest
+POSTGRES_PASSWORD=replace-with-a-strong-password
+POSTGRES_URL=postgresql://kuest:replace-with-a-strong-password@postgres:5432/kuest
+```
+
+Use the same password in both values and URL-encode special characters in `POSTGRES_URL`. The hostname is `postgres` inside the container, not `localhost`. This profile starts PostgreSQL only; configure S3-compatible asset storage separately. The supplied PostgreSQL image does not include the database HTTP scheduler, so configure [Scheduled Jobs](/manual-installation/scheduler-jobs).
+
 ## Local runtime
 
 Use `infra/docker/docker-compose.yml`:
@@ -52,26 +67,28 @@ docker compose --env-file .env -f infra/docker/docker-compose.production.yml --p
 Run database migrations:
 
 ```bash
-docker compose --env-file .env -f infra/docker/docker-compose.production.yml exec web pnpm db:push
+docker compose --env-file .env -f infra/docker/docker-compose.production.yml exec web bun run db:push
 ```
 
-If you are using the local Postgres profile, wait for the database container to become healthy first.
+If you are using the local Postgres profile, wait for the database container to become healthy first. Use `infra/docker/docker-compose.yml` in the migration command when running the local configuration.
+
+The production `web` container may be unhealthy until migrations finish. Caddy waits for `web` to become healthy; if the initial `up` command reports a dependency failure, run the migration against the running web container, then rerun `up -d`.
 
 ## Verify the deployment
 
 ```bash
-docker compose -f infra/docker/docker-compose.production.yml ps
-curl -fsS "${SITE_URL}"
+docker compose --env-file .env -f infra/docker/docker-compose.production.yml ps
+curl -fsS https://markets.example.com
 ```
 
-Confirm that `web` is healthy, Caddy is serving HTTPS, and the admin wallet can sign in before sending traffic to the host.
+Replace the example URL with your `SITE_URL`. Confirm that `web` is healthy, Caddy is serving HTTPS, and the admin wallet can sign in before sending traffic to the host.
 
 ## Common operations
 
 ```bash
-docker compose -f infra/docker/docker-compose.production.yml ps
-docker compose -f infra/docker/docker-compose.production.yml logs -f web
-docker compose -f infra/docker/docker-compose.production.yml logs -f caddy
+docker compose --env-file .env -f infra/docker/docker-compose.production.yml ps
+docker compose --env-file .env -f infra/docker/docker-compose.production.yml logs -f web
+docker compose --env-file .env -f infra/docker/docker-compose.production.yml logs -f caddy
 ```
 
 <Tip>

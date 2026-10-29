@@ -45,7 +45,7 @@ Production base URL: `https://create-market.kuest.com`. Self-hosted deployments 
     The prediction-market admin and scheduler can enforce your allowed creator policy before calling this API. The create-market worker itself requires the creator to have an on-chain proposer whitelist registered before preparation can complete.
   </Accordion>
   <Accordion title="Funding" icon="coins">
-    The creator needs POL for gas and the required USDC funding shown by `GET /market-config`. The transaction plan may include USDC approvals and fee or reward payments.
+    The creator needs POL for gas and enough USDC for every market in the event. `GET /market-config` shows per-market funding hints. Review the transaction plan for USDC approvals and fee or reward payments before signing.
   </Accordion>
   <Accordion title="Images" icon="image">
     `POST /prepare` requires an event image. Optional option images and sports team logos can also be uploaded in the same multipart request.
@@ -74,7 +74,7 @@ Production base URL: `https://create-market.kuest.com`. Self-hosted deployments 
     Call `GET /pending?requestId=...&creator=...&chainId=...` until `request.prepared.txPlan` is present.
   </Step>
   <Step title="Execute the transaction plan">
-    Send every item in `txPlan` from the creator wallet using the returned `to`, `value`, and `data`.
+    Send every item in `txPlan` in order from the creator wallet using the returned `to`, `value`, and `data`. Wait for a successful receipt before sending a dependent transaction.
   </Step>
   <Step title="Persist transaction hashes">
     Call `POST /tx-confirm` after each transaction or once with the full list. This makes the flow resumable.
@@ -98,7 +98,9 @@ Persist `requestId`, the serialized payload, and every confirmed transaction has
 | `finalize_running` | Registration and final metadata are being processed. | Poll `GET /pending` or retry `POST /finalize`. |
 | `metadata_update_pending` | Final metadata exists, but metadata update transactions still need to be signed. | Execute `metadataUpdateTxPlan`, confirm hashes, finalize again. |
 | `finalized` | Markets are registered and final metadata is attached. | Store `registerResults` and `metadataUpdates`. |
-| `failed` | The worker stored an error. | Read `errorMessage`, fix the input or funding issue, and start a new request if needed. |
+| `failed` | The worker stored an error. | Read `errorMessage` and preserve transaction hashes. If preparation completed, correct the finalization issue and retry `POST /finalize` on the same request. Start a new request only when preparation must be rebuilt. |
+
+`prepare_in_progress` and `finalize_in_progress` are acknowledgements from the POST endpoints; the table lists the persisted statuses returned by `GET /pending`.
 
 ## Security Model
 

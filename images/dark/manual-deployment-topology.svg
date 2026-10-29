@@ -10,7 +10,7 @@
   <rect class="accent" x="430" y="100" width="340" height="150" rx="22"/>
   <text class="eyebrow on-accent" x="462" y="138">PUBLIC RUNTIME</text>
   <text class="label on-accent" x="462" y="178">Kuest frontend</text>
-  <text class="copy on-accent" x="462" y="207">Node.js 24 · HTTPS · SITE_URL</text>
+  <text class="copy on-accent" x="462" y="207">Bun · HTTPS · SITE_URL</text>
 
   <rect class="card" x="52" y="100" width="280" height="150" rx="22"/>
   <text class="eyebrow" x="82" y="138">STATE</text>

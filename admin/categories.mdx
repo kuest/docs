@@ -1,6 +1,6 @@
 ---
 title: Categories
-description: Control category visibility, main-category placement, translations, event notes, and event hiding rules.
+description: Control category visibility, translations, event notes, and the sports and esports sidebars.
 icon: tags
 ---
 
@@ -15,12 +15,22 @@ icon: tags
     `Hide Category` removes the tag from category discovery surfaces. `Hide Events` is stronger and hides every event carrying that category from the public site. Use `Hide Events` carefully because it impacts event visibility, not just navigation.
   </Accordion>
   <Accordion title="Translations" icon="languages">
-    The language button opens translation inputs for every supported non-English locale: German, Spanish, Portuguese, French, Chinese, Japanese, Arabic, Russian, Italian, Polish, and Korean. English stays the source label.
+    The language button opens translation inputs for the non-English languages enabled in [Locales](/admin/locales). English stays the source label.
   </Accordion>
   <Accordion title="Event page note" icon="square-pen">
     The edit action adds a plain-text note to event pages that match the category. Use it for category-wide context that belongs in the event Rules area. Leave it empty to remove the note; HTML is not accepted.
   </Accordion>
   <Accordion title="Sports category behavior" icon="trophy">
-    Sports event categories are generated automatically during [Create Event](/admin/events#create-event) when you choose the sports fields. That means sports categories are not maintained exactly like regular manual tags.
+    Sports event tags are generated automatically during [Create Event](/admin/events#create-event) when you choose the sports fields. Configure their discovery navigation separately with the sports and esports sidebar managers below.
   </Accordion>
 </AccordionGroup>
+
+## Sports and esports sidebars
+
+Open **Manage sports sidebar** or **Manage esports sidebar** from the Categories toolbar. Each manager lets you create, rename, enable, feature, and reorder its entries.
+
+- Use a name and slug to add a top-level sport or esports game, or select its parent to add a nested league.
+- Featured categories appear first. The remaining sports or games follow, with nested leagues inside their parent.
+- Use the up and down controls to set the order, and **Save sidebar** to apply your changes.
+
+These controls organize the sports and esports navigation. Use **Hide Events** in the category table when you need to hide the matching events themselves.
