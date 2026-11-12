@@ -4,18 +4,18 @@ description: Automate event and market creation through the create-market worker
 icon: square-pen
 ---
 
-Use the Create Market API when you want to create events and markets outside the admin UI. The API prepares metadata, images, on-chain calldata, and final registration, while your integration signs and sends the wallet transactions from the creator EOA.
+Use the Create Market API when you want to create events and markets outside the admin UI. The API prepares metadata, images, on-chain calldata, and finalization, while your integration signs and sends the wallet transactions from the creator EOA.
 
 <Frame>
   <img
     className="block dark:hidden"
     src="/images/create-market-lifecycle.svg"
-    alt="Create Market API lifecycle from runtime configuration and creator authorization through transactions and final registration"
+    alt="Create Market API lifecycle from runtime configuration and creator authorization through transactions and finalization"
   />
   <img
     className="hidden dark:block"
     src="/images/dark/create-market-lifecycle.svg"
-    alt="Create Market API lifecycle from runtime configuration and creator authorization through transactions and final registration"
+    alt="Create Market API lifecycle from runtime configuration and creator authorization through transactions and finalization"
   />
 </Frame>
 
@@ -31,7 +31,7 @@ Production base URL: `https://create-market.kuest.com`. Self-hosted deployments 
     Authorizes the exact payload and sends every transaction from the creator EOA.
   </Card>
   <Card title="API finalizes" icon="badge-check">
-    Validates confirmed transactions and registers the completed markets.
+    Validates confirmed transactions and finalizes the markets and their metadata.
   </Card>
 </CardGroup>
 
@@ -95,9 +95,9 @@ Persist `requestId`, the serialized payload, and every confirmed transaction has
 | `auth_pending` | Challenge exists but `POST /prepare` has not accepted it yet. | Submit the signed multipart prepare request. |
 | `prepare_running` | Images and metadata are being processed. | Poll `GET /pending`. |
 | `prepared` | `txPlan` is ready. | Send creator transactions, confirm hashes, then finalize. |
-| `finalize_running` | Registration and final metadata are being processed. | Poll `GET /pending` or retry `POST /finalize`. |
+| `finalize_running` | Confirmed transactions and final metadata are being processed. | Poll `GET /pending` or retry `POST /finalize`. |
 | `metadata_update_pending` | Final metadata exists, but metadata update transactions still need to be signed. | Execute `metadataUpdateTxPlan`, confirm hashes, finalize again. |
-| `finalized` | Markets are registered and final metadata is attached. | Store `registerResults` and `metadataUpdates`. |
+| `finalized` | Markets are finalized and final metadata is attached. | Store `registerResults` and `metadataUpdates`. |
 | `failed` | The worker stored an error. | Read `errorMessage` and preserve transaction hashes. If preparation completed, correct the finalization issue and retry `POST /finalize` on the same request. Start a new request only when preparation must be rebuilt. |
 
 `prepare_in_progress` and `finalize_in_progress` are acknowledgements from the POST endpoints; the table lists the persisted statuses returned by `GET /pending`.

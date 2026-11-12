@@ -85,7 +85,7 @@ Select a market to open the sponsorship modal. The quote is recalculated when a 
     This is the widest allowed gap between the best buy and sell prices. A smaller spread is more demanding and normally increases the market maker payment.
   </Accordion>
   <Accordion title="Liquidity availability" icon="percent">
-    This is the expected percentage of the service period during which the required liquidity should be available. Higher availability generally increases the campaign payment.
+    This is the expected percentage of the service period during which the required liquidity should be available. It is defined by the escrow configuration, not selected in the sponsorship form. Review the availability shown before funding.
   </Accordion>
   <Accordion title="Service period" icon="calendar-range">
     The service period defines when the market maker is expected to provide liquidity. The quote checks that the period is valid and ends no later than the source market.
@@ -100,6 +100,7 @@ The payment summary separates the campaign components so you can review the comm
 | --- | --- |
 | **Market maker payment** | Reward offered to the market maker for meeting the selected terms. |
 | **Extra (optional)** | An additional percentage applied to the base market maker payment. The allowed range is 0–1000%. |
+| **Multi-market discount** | Discount shown in the quote for an eligible campaign covering multiple markets. Review the quoted discount before funding. |
 | **Kuest fee** | Protocol fee included by the quote. |
 | **Import event** | Separate USDC payment required to prepare a Polymarket mirror. It is paid to the import receiver, not deposited into the escrow campaign. |
 | **Estimated** | Total amount the connected wallet is expected to fund or pay across the shown steps. |
@@ -142,7 +143,7 @@ Use this path when the selected market already exists on Kuest and does not requ
     Search for the market, review its source, end date, liquidity, and volume, then open the sponsorship modal.
   </Step>
   <Step title="Set the terms">
-    Choose liquidity per side, maximum spread, availability, service period, and any optional extra payment. Check the orderbook preview and the final quote.
+    Choose liquidity per side, maximum spread, service period, and any optional extra payment. Review the displayed availability, the orderbook preview, and the final quote.
   </Step>
   <Step title="Confirm the wallet">
     Connect the sponsor wallet, switch networks if requested, and make sure it has the displayed USDC and POL balances.
